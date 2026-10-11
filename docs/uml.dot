@@ -1,0 +1,75 @@
+digraph Matchmaking {
+  graph [rankdir=TB, fontname="DejaVu Sans", fontsize=16, label="Video Game Matchmaking — UML class diagram", labelloc=t, nodesep=0.3, ranksep=0.55, bgcolor="white"];
+  node [shape=record, fontname="DejaVu Sans", fontsize=10, style=filled, fillcolor="#f8fafc", margin="0.1,0.07"];
+  edge [fontname="DejaVu Sans", fontsize=9, color="#64748b", arrowsize=0.65];
+  App [label="{App «Client»|+ main(args)\l+ run(store, input, out)\l}"];
+  subgraph cluster_facade {
+    label="Facades and durable chain journal"; color="#94a3b8";
+    MatchmakingFacade [label="{MatchmakingFacade|+ startMatch(r1, r2, latency, cheater, pause)\l+ resume(id)\l+ compensate(id)\l- advance(id, pause)\l}", fillcolor="#dbeafe"];
+    AdminFacade [label="{AdminFacade|+ inspect() : String\l+ compensate(id) : MatchChain\l}", fillcolor="#dbeafe"];
+    ChainRepository [label="{ChainRepository|+ save(match)\l+ find(id) : MatchChain\l+ all() : List\l}"];
+    MatchChain [label="{MatchChain «record»|id, rating1, rating2, latency, cheater\lstage, message, rollback\lStage: PENDING_A, PENDING_B, PENDING_C\lCOMPLETED, COMPENSATING, COMPENSATED\l|+ withStage(stage)\l+ withFailure(reason)\l+ withUndo(step)\l}"];
+  }
+  subgraph cluster_a {
+    label="A — Party formation"; color="#86b99a";
+    PartyFormation [label="{PartyFormation|+ reserve(id, r1, r2) : Party\l+ cancel(id)\l}"];
+    SkillRatingService [label="{SkillRatingService «business rule»|+ validate(first, second)\l}"];
+    PartyRepository [label="{PartyRepository «gateway»|+ save(party)\l+ find(id) : Party\l}"];
+    Party [label="{Party|id, rating1, rating2, status\lStatus: NEW, RESERVED, CANCELLED\l|+ reserve()\l+ cancel()\l+ id(), rating1(), rating2(), status()\l}"];
+    PartyFormation -> SkillRatingService;
+    PartyFormation -> PartyRepository;
+    PartyRepository -> Party [style=dashed, label="reads / writes"];
+    PartyFormation -> Party [style=dashed, label="transitions"];
+  }
+  subgraph cluster_b {
+    label="B — Server allocation"; color="#d4ae65";
+    ServerAllocator [label="{ServerAllocator|+ allocate(id, milliseconds) : ServerAllocation\l+ release(id)\l}"];
+    LatencyChecker [label="{LatencyChecker «business rule»|+ validate(milliseconds)\l}"];
+    AllocationRepository [label="{AllocationRepository «gateway»|+ save(allocation)\l+ find(id) : ServerAllocation\l}"];
+    ServerAllocation [label="{ServerAllocation|id, latency, status\lStatus: NEW, ALLOCATED, RELEASED\l|+ allocate()\l+ release()\l+ id(), latency(), status()\l}"];
+    ServerAllocator -> LatencyChecker;
+    ServerAllocator -> AllocationRepository;
+    AllocationRepository -> ServerAllocation [style=dashed, label="reads / writes"];
+    ServerAllocator -> ServerAllocation [style=dashed, label="transitions"];
+  }
+  subgraph cluster_c {
+    label="C — Session confirmation"; color="#b89dd2";
+    SessionService [label="{SessionService|+ confirm(id, cheatDetected) : GameSession\l}"];
+    AntiCheatScanner [label="{AntiCheatScanner «business rule»|+ validate(cheatDetected)\l}"];
+    SessionLogger [label="{SessionLogger «gateway»|+ save(session)\l+ find(id) : GameSession\l}"];
+    GameSession [label="{GameSession|id, status\lStatus: NEW, CONFIRMED, REJECTED\l|+ confirm()\l+ reject()\l+ id(), status()\l}"];
+    SessionService -> AntiCheatScanner;
+    SessionService -> SessionLogger;
+    SessionLogger -> GameSession [style=dashed, label="reads / writes"];
+    SessionService -> GameSession [style=dashed, label="transitions"];
+  }
+  subgraph cluster_common {
+    label="Shared infrastructure"; color="#94a3b8";
+    CsvStore [label="{CsvStore|root : Path\l|+ read(table, id) : String[]\l+ write(table, id, fields)\l+ ids(table) : List\l}"];
+    MatchmakingException [label="{MatchmakingException|extends RuntimeException\l+ MatchmakingException(message)\l}"];
+  }
+  App -> MatchmakingFacade;
+  App -> AdminFacade;
+  App -> CsvStore [style=dashed, label="bootstrap"];
+  AdminFacade -> MatchmakingFacade;
+  AdminFacade -> ChainRepository;
+  AdminFacade -> PartyRepository;
+  AdminFacade -> AllocationRepository;
+  AdminFacade -> SessionLogger;
+  MatchmakingFacade -> ChainRepository;
+  MatchmakingFacade -> PartyFormation;
+  MatchmakingFacade -> ServerAllocator;
+  MatchmakingFacade -> SessionService;
+  MatchmakingFacade -> PartyRepository;
+  MatchmakingFacade -> AllocationRepository;
+  MatchmakingFacade -> SessionLogger;
+  ChainRepository -> MatchChain [style=dashed, label="reads / writes"];
+  MatchmakingFacade -> MatchChain [style=dashed, label="updates / returns"];
+  ChainRepository -> CsvStore;
+  PartyRepository -> CsvStore;
+  AllocationRepository -> CsvStore;
+  SessionLogger -> CsvStore;
+  SkillRatingService -> MatchmakingException [style=dashed];
+  LatencyChecker -> MatchmakingException [style=dashed];
+  AntiCheatScanner -> MatchmakingException [style=dashed];
+}
