@@ -35,7 +35,7 @@ class RecoveryTest {
     @Test void interruptedRollbackReleasesBBeforeTouchingAAndCanResume() throws Exception {
         CsvStore store = new CsvStore(disk);
         MatchChain paused = new MatchmakingFacade(store).startMatch(1000, 1100, 50, true, 2);
-        // Make only A's next write fail. If A were undone first, B would remain allocated.
+        // Block A's next write to check that B is released first.
         Path blockedWrite = disk.resolve("parties").resolve(paused.id() + ".tmp");
         Files.createDirectory(blockedWrite);
         assertThrows(UncheckedIOException.class, () -> new MatchmakingFacade(store).resume(paused.id()));

@@ -2,7 +2,6 @@ package matchmaking.session;
 
 import matchmaking.common.CsvStore;
 
-// Persistence gateway for subsystem C, including rejected sessions.
 public class SessionLogger {
     private final CsvStore store;
     public SessionLogger(CsvStore store) { this.store = store; }

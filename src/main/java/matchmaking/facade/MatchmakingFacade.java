@@ -42,8 +42,7 @@ public class MatchmakingFacade {
         if (match.stage() == MatchChain.Stage.COMPLETED || match.stage() == MatchChain.Stage.COMPENSATED) return match;
         if (match.stage() == MatchChain.Stage.COMPENSATING) return compensate(id);
         try {
-            // Services reload their own records. An already committed step is idempotent,
-            // even if the process stopped before the next journal write.
+            // Each service reuses a step already saved under this ID.
             formation.reserve(id, match.rating1(), match.rating2());
             match = match.withStage(MatchChain.Stage.PENDING_B);
             chains.save(match);
@@ -74,7 +73,7 @@ public class MatchmakingFacade {
             match = match.withFailure("Cancelled by administrator");
             chains.save(match);
         }
-        // Read committed records, never infer rollback depth from memory or journal alone.
+        // Check the saved records. Undo B before A.
         ServerAllocation allocation = allocations.find(id);
         if (allocation != null && allocation.status() == ServerAllocation.Status.ALLOCATED) servers.release(id);
         if (allocation != null && allocation.status() != ServerAllocation.Status.NEW && !match.rollback().contains("B")) {

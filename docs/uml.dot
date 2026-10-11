@@ -4,7 +4,7 @@ digraph Matchmaking {
   edge [fontname="DejaVu Sans", fontsize=9, color="#64748b", arrowsize=0.65];
   App [label="{App «Client»|+ main(args)\l+ run(store, input, out)\l}"];
   subgraph cluster_facade {
-    label="Facades and durable chain journal"; color="#94a3b8";
+    label="Facades and chain log"; color="#94a3b8";
     MatchmakingFacade [label="{MatchmakingFacade|+ startMatch(r1, r2, latency, cheater, pause)\l+ resume(id)\l+ compensate(id)\l- advance(id, pause)\l}", fillcolor="#dbeafe"];
     AdminFacade [label="{AdminFacade|+ inspect() : String\l+ compensate(id) : MatchChain\l}", fillcolor="#dbeafe"];
     ChainRepository [label="{ChainRepository|+ save(match)\l+ find(id) : MatchChain\l+ all() : List\l}"];
@@ -13,7 +13,7 @@ digraph Matchmaking {
   subgraph cluster_a {
     label="A — Party formation"; color="#86b99a";
     PartyFormation [label="{PartyFormation|+ reserve(id, r1, r2) : Party\l+ cancel(id)\l}"];
-    SkillRatingService [label="{SkillRatingService «business rule»|+ validate(first, second)\l}"];
+    SkillRatingService [label="{SkillRatingService «rule»|+ validate(first, second)\l}"];
     PartyRepository [label="{PartyRepository «gateway»|+ save(party)\l+ find(id) : Party\l}"];
     Party [label="{Party|id, rating1, rating2, status\lStatus: NEW, RESERVED, CANCELLED\l|+ reserve()\l+ cancel()\l+ id(), rating1(), rating2(), status()\l}"];
     PartyFormation -> SkillRatingService;
@@ -24,7 +24,7 @@ digraph Matchmaking {
   subgraph cluster_b {
     label="B — Server allocation"; color="#d4ae65";
     ServerAllocator [label="{ServerAllocator|+ allocate(id, milliseconds) : ServerAllocation\l+ release(id)\l}"];
-    LatencyChecker [label="{LatencyChecker «business rule»|+ validate(milliseconds)\l}"];
+    LatencyChecker [label="{LatencyChecker «rule»|+ validate(milliseconds)\l}"];
     AllocationRepository [label="{AllocationRepository «gateway»|+ save(allocation)\l+ find(id) : ServerAllocation\l}"];
     ServerAllocation [label="{ServerAllocation|id, latency, status\lStatus: NEW, ALLOCATED, RELEASED\l|+ allocate()\l+ release()\l+ id(), latency(), status()\l}"];
     ServerAllocator -> LatencyChecker;
@@ -35,7 +35,7 @@ digraph Matchmaking {
   subgraph cluster_c {
     label="C — Session confirmation"; color="#b89dd2";
     SessionService [label="{SessionService|+ confirm(id, cheatDetected) : GameSession\l}"];
-    AntiCheatScanner [label="{AntiCheatScanner «business rule»|+ validate(cheatDetected)\l}"];
+    AntiCheatScanner [label="{AntiCheatScanner «rule»|+ validate(cheatDetected)\l}"];
     SessionLogger [label="{SessionLogger «gateway»|+ save(session)\l+ find(id) : GameSession\l}"];
     GameSession [label="{GameSession|id, status\lStatus: NEW, CONFIRMED, REJECTED\l|+ confirm()\l+ reject()\l+ id(), status()\l}"];
     SessionService -> AntiCheatScanner;
@@ -44,7 +44,7 @@ digraph Matchmaking {
     SessionService -> GameSession [style=dashed, label="transitions"];
   }
   subgraph cluster_common {
-    label="Shared infrastructure"; color="#94a3b8";
+    label="CSV storage"; color="#94a3b8";
     CsvStore [label="{CsvStore|root : Path\l|+ read(table, id) : String[]\l+ write(table, id, fields)\l+ ids(table) : List\l}"];
     MatchmakingException [label="{MatchmakingException|extends RuntimeException\l+ MatchmakingException(message)\l}"];
   }

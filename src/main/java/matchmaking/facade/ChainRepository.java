@@ -10,7 +10,7 @@ public class ChainRepository {
     private final CsvStore store;
     public ChainRepository(CsvStore store) { this.store = store; }
     public void save(MatchChain match) {
-        // Error messages may contain commas, so encode just this CSV field.
+        // Base64 keeps commas in error messages out of the CSV fields.
         String reason = Base64.getEncoder().encodeToString(match.message().getBytes(StandardCharsets.UTF_8));
         store.write("chains", match.id(), match.id(), String.valueOf(match.rating1()),
                 String.valueOf(match.rating2()), String.valueOf(match.latency()),

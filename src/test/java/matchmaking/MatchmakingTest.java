@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class MatchmakingTest {
     @TempDir Path disk;
 
-    // Small domain-specific testing language: a match with two compatible players.
+    // Create a match with two compatible players.
     private MatchChain matchWith(int latency, boolean cheater, int pauseAfter) {
         return new MatchmakingFacade(new CsvStore(disk))
                 .startMatch(1000, 1100, latency, cheater, pauseAfter);

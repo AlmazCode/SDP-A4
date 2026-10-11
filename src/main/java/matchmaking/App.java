@@ -21,7 +21,7 @@ public class App {
         AdminFacade admin = new AdminFacade(store);
         out.println("Video Game Matchmaking");
         while (true) {
-            out.println("1 New match | 2 Inspect saved state | 3 Resume match | 4 Compensate match | 0 Exit");
+            out.println("1 New match | 2 View records | 3 Resume match | 4 Cancel match | 0 Exit");
             if (!input.hasNextLine()) return;
             String option = input.nextLine().strip();
             try {
@@ -30,8 +30,8 @@ public class App {
                     case "1" -> {
                         int first = integer(input, out, "Player 1 rating (0-5000): ");
                         int second = integer(input, out, "Player 2 rating (0-5000): ");
-                        int latency = integer(input, out, "Server latency in ms (over 100 makes B fail): ");
-                        out.print("Cheat detected? y/n (y makes C fail): ");
+                        int latency = integer(input, out, "Server latency (ms): ");
+                        out.print("Cheat detected? y/n: ");
                         boolean cheater = switch (input.nextLine().strip().toLowerCase()) {
                             case "y" -> true;
                             case "n" -> false;
@@ -49,11 +49,11 @@ public class App {
                     default -> out.println("Unknown option");
                 }
             } catch (NumberFormatException e) {
-                out.println("Enter a whole number. Request cancelled; use the menu again.");
+                out.println("Enter a whole number.");
             } catch (MatchmakingException e) {
                 out.println("Error: " + e.getMessage());
             } catch (UncheckedIOException e) {
-                out.println("Disk error: " + e.getCause().getMessage() + ". Fix storage and resume using the match ID in option 2.");
+                out.println("Disk error: " + e.getCause().getMessage() + ". Fix the disk problem, then resume the match.");
             } catch (NoSuchElementException e) {
                 return;
             }
